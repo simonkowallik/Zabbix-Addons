@@ -1,0 +1,171 @@
+#!/usr/bin/perl
+use strict;
+# script: advsnmp.discovery 
+# version: 1.0
+# author: Simon Kowallik <sk@simonkowallik.com>
+# description: Zabbix low level discovery script for advanced index discovery 
+# license: GPL2
+
+#USAGE:
+#advsnmp.discovery[{HOST.IP},"-v2c -cpublic",.1.2.3.4.5.6,offset.length,offset.length,offset.lentgh
+#                      ^            ^             ^              ^             ^            ^
+#                      |            |             |              |             |            |
+#ARGV                  0            1             2              3             4            5
+#                      |            |             |              |             |            |
+#                 IP/DNS Name       |             |               \            |           /
+#                             SNMP Settings    SNMP OID           INDEX_offset.INDEX_length
+#
+#OID: .0.0.0.0.0.0.1.0.2.1.1.4.4.0
+#will be cut to:  .1.0.2.1.1.4.4.0
+#
+#     .     1 .     0 .     2 .     1 .     1 .     4 .     4 .     0
+#0=>'', 1=>'1', 2=>'0', 3=>'2', 4=>'1', 5=>'1', 6=>'4', 7=>'4', 8=>'0'
+#
+#         $_offset     $_len
+#                 \   /
+#config: INDEX1 -> 1.1
+#        INDEX2 -> 3.2
+#        INDEX3 -> 5.3
+#
+#   INDEX1   INDEX2   INDEX3
+#      \       |       /
+#     .[1].0.[2.1].[1.4.4].0
+#
+#
+#EXAMPLE:
+# OIDs to query:
+# .0.0.0.0.0.0.1.0.2.1.1.4.4.0
+# .0.0.0.0.0.0.2.0.3.6.1.4.4.0
+# .0.0.0.0.0.0.3.0.4.5.1.4.4.0
+# .0.0.0.0.0.0.1.0.2.4.5.3.4.0
+# .0.0.0.0.0.0.2.0.2.2.5.3.4.0
+# .0.0.0.0.0.0.3.0.2.9.5.3.4.0
+#
+# Discovery Rule with "external check"
+# Key: advsnmp.discovery[{HOST.IP},"-v2c -cpublic",.0.0.0.0.0.0,1.1,3.2,5.3]
+#
+# Idexes will be:
+# ADVSNMPINDEX1 ADVSNMPINDEX2 ADVSNMPINDEX3
+#       1            2.1          1.4.4            
+#       2            3.6          1.4.4            
+#       3            4.5          1.4.4            
+#       1            2.4          5.3.4            
+#       2            2.2          5.3.4            
+#       3            2.9          5.3.4            
+
+
+# Workaround for Zabbix Bug ZBX-4725
+my $ZBX_4725_workaround = 1;
+
+
+# global options
+my $GLOB_SNMPW = "-OQn";
+my $SNMPWALK_BIN = "/usr/bin/snmpwalk";
+
+my $OPT_HOST = $ARGV[0];
+my $OPT_SNMPW = $ARGV[1];
+my $OPT_OID = $ARGV[2];
+
+# build config
+my %OPT_CONFIG;
+my $OPT_CONFIG_STRING;
+for (my $cnt = 3; $cnt < scalar(@ARGV); $cnt++) {
+  my ($_offset, $_len) = split(/\./, $ARGV[$cnt]);
+  $OPT_CONFIG{$_offset} = $_len;
+  $OPT_CONFIG_STRING = $OPT_CONFIG_STRING . ',' . $ARGV[$cnt];
+}
+
+#variables
+my %INDEXES;
+
+# assign OPT_OID to opt_oid_escape
+my $opt_oid_escape = $OPT_OID; 
+# then prepend a dot (.) to it in case OPT_OID was specified without one
+if($opt_oid_escape !~ m/^\./) {
+  $opt_oid_escape = '.' . $opt_oid_escape;
+}
+# then escape all dots in it for future regexes
+$opt_oid_escape =~ s/\./\\./g;
+
+
+foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $OPT_OID`)
+{
+    # remove newline
+    chomp($snmpw_line);
+
+    # split OID = VALUE
+    my ($oid, $value) = split(/ = /, $snmpw_line);
+
+    # remove OPT_OID part from $oid
+    # and we will get the trailing OID part, where we will extract the INDEX
+    #
+    # before: .0.0.0.0.0.0.1.0.2.1.0 
+    $oid =~ s/$opt_oid_escape//;
+    # after: .1.0.2.1.0
+
+
+    # split rest of oid into array
+    # index N ($OPT_INDEX) is ARRAY[N] -> ARRAY[$OPT_INDEX] 
+    my @oid_arr = split(/\./, $oid);
+    #contains: 0=>'', 1=>'1', 2=>'0', 3=>'2', 4=>'1', 5=>'0'
+
+    # put indexes into @%indexes
+    my $line_index;
+    # fetch offset from OPT_CONFIG
+    foreach my $_offset (sort keys %OPT_CONFIG) {
+      # set $index to index (OID part)
+      my $index = $oid_arr[$_offset];
+      # when complete $index by looking at len (stored in $OPT_CONFIG{$_offset})
+      for (my $i = 1; $i < $OPT_CONFIG{$_offset}; $i++) {
+        # attach next OID part for len of index
+        $index = $index .'.'. $oid_arr[$_offset+$i];
+      }
+      $line_index = $line_index . ";$index";      
+    }
+    $INDEXES{$line_index} = $value;
+    # put generated line index into @indexes
+}
+
+#
+# print JSON
+# 
+
+print "{\n";
+# Workaround for ZBX-4725 see: https://support.zabbix.com/browse/ZBX-4725
+if($ZBX_4725_workaround) {
+  print "\t\"advsnmp.discovery[{HOST.IP},\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
+} else {
+# when fixed, activate:
+  print "\t\"advsnmp.discovery[$OPT_HOST,\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
+}
+
+my $first_line = 1; 
+#for (my $i = 0; $i < $#INDEXES; $i++) {
+foreach my $line_index (sort keys %INDEXES) {
+
+    # print if it is not the first line
+    if($first_line) {
+      # we are at first line
+      $first_line = 0;
+    } else {
+      # we are not at first line
+      print "\t,\n";
+    }
+ 
+    print "\t\t{\n";
+
+    # print all INDEXES
+    my $ctr = 1;
+    foreach my $index ( split(/;/, $line_index) ) {
+      next if (!$index);
+      print "\t\t\"{#ADVSNMPINDEX$ctr}\": \"$index\",\n";
+      $ctr++
+    }
+    # print value
+    print "\t\t\"{#ADVSNMPVALUE}\":\"$INDEXES{$line_index}\"\n";
+    print "\t\t}";
+
+} #for
+ 
+print "\n\t]\n";
+print "}\n";
