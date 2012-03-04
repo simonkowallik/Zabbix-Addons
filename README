@@ -23,7 +23,7 @@ which is an alpha version of Zabbix 2.0.
 ATTENTION
 =========
 At the time of writing this, there is an open bug ZBX-4725 which has some impact to
-the usage of this script but does not limit its main fuctionality.
+the usage of this script but does not limit its main functionality.
 Right now, you HAVE TO use {HOST.IP} to specify the target to query!
 If this bug is solved, you need to change $ZBX_4725_workaround to 0.
 
