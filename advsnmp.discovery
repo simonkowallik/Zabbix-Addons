@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 use strict;
 # script: advsnmp.discovery 
-# version: 1.0
-# author: Simon Kowallik <sk@simonkowallik.com>
+# version: 1.1
+# author: Simon Kowallik <sk simonkowallik.com>
 # description: Zabbix low level discovery script for advanced index discovery 
 # license: GPL2
 
@@ -12,8 +12,8 @@ use strict;
 #                      |            |             |              |             |            |
 #ARGV                  0            1             2              3             4            5
 #                      |            |             |              |             |            |
-#                 IP/DNS Name       |             |               \            |           /
-#                             SNMP Settings    SNMP OID           INDEX_offset.INDEX_length
+#                 IP/DNS Name       |             |              |             |            |
+#                             SNMP Settings    SNMP OID       INDEX_offset.INDEX_length
 #
 #OID: .0.0.0.0.0.0.1.0.2.1.1.4.4.0
 #will be cut to:  .1.0.2.1.1.4.4.0
@@ -62,6 +62,7 @@ my $ZBX_4725_workaround = 1;
 my $GLOB_SNMPW = "-OQn";
 my $SNMPWALK_BIN = "/usr/bin/snmpwalk";
 
+# never modify these values, as we have to pass them back to Zabbix within the JSON element! 
 my $OPT_HOST = $ARGV[0];
 my $OPT_SNMPW = $ARGV[1];
 my $OPT_OID = $ARGV[2];
@@ -80,15 +81,22 @@ my %INDEXES;
 
 # assign OPT_OID to opt_oid_escape
 my $opt_oid_escape = $OPT_OID; 
-# then prepend a dot (.) to it in case OPT_OID was specified without one
+# prepend a dot (.) to opt_oid_escape in case OPT_OID was specified without one
 if($opt_oid_escape !~ m/^\./) {
   $opt_oid_escape = '.' . $opt_oid_escape;
 }
-# then escape all dots in it for future regexes
+# v1.1: cut off trailing dot, if it exists
+if($opt_oid_escape =~ m/\.$/) {
+  chop($opt_oid_escape);
+}
+# create snmpw_oid from sanitized OPT_OID
+my $snmpw_oid = $opt_oid_escape;
+
+# escape all dots in opt_oid_escape for future regexes
 $opt_oid_escape =~ s/\./\\./g;
 
 
-foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $OPT_OID`)
+foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $snmpw_oid`)
 {
     # remove newline
     chomp($snmpw_line);
@@ -117,6 +125,8 @@ foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $OPT_OID
       my $index = $oid_arr[$_offset];
       # when complete $index by looking at len (stored in $OPT_CONFIG{$_offset})
       for (my $i = 1; $i < $OPT_CONFIG{$_offset}; $i++) {
+	#v1.1: next if oid_arr element is empty. this can happen for dymanic length indexes
+	next if($oid_arr[$_offset+$i] =~ m/^$/);
         # attach next OID part for len of index
         $index = $index .'.'. $oid_arr[$_offset+$i];
       }
@@ -135,7 +145,7 @@ print "{\n";
 if($ZBX_4725_workaround) {
   print "\t\"advsnmp.discovery[{HOST.IP},\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
 } else {
-# when fixed, activate:
+# when fixed
   print "\t\"advsnmp.discovery[$OPT_HOST,\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
 }
 

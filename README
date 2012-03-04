@@ -10,7 +10,8 @@ It integrates seamless into Zabbix by using "External check" discovery rules.
 
 advsnmp.discovery has some more advanced indexing features then the build-in variant:
 - Multiple Indexes {#ADVSNMPINDEX1} - {#ADVSNMPINDEXn}
-- Variable Indexlength
+- Variable Index length
+- Dynamic Index length
 
 This discovery script is written in perl without any modules for maximum flexibility.
 However it requires the net-snmp tool 'snmpwalk'.
@@ -77,16 +78,23 @@ If you use SNMP Version 3, add your authentication and encryption settings.
 
 Parameter3 will be used as the base OID, which will be provided to walk the OID path.
 
-Now the interesting part: Parameter4 and all following Parameters.
-Parameter4 specifies the INDEX and its length in the format 'n.m'.
+Parameter4 and all following Parameters:
+Parameter4 specifies the INDEX offset and its length in the format 'n.m'.
 Where 'n' is the relative offset for the INDEX value from the base OID, counted from left to right.
-'m' is the "OID length", that means how much OID Elements to span.
+'m' is the "OID length", that means how much OID Elements the Index should span.
 
 Note, by 'OID Elements' I mean each value, which is separated by a dot (.).
-OID '.1.2.3.4' has 4 Elements.
+For example OID '.1.2.3.4' has 4 Elements.
 
-Now by example:
----------------
+If you have an OID tree with dynmic index length, you can interpret 'm' as the maximum index length supported.
+
+advsnmp.discovery provides you with the following macros to use in Zabbix:
+{#ADVSNMPINDEX1} for the first INDEX to {#ADVSNMPINDEXn} for INDEX number 'n'
+{#ADVSNMPVALUE} for the value of the LAST MATCHED OIDs! As we extract multiple Indexes from the same OID,
+there are no multiple values like {#ADVSNMPVALUE1} and so on!
+
+By example:
+-----------
 
 OIDs we would like to query by a discovery rule:
 .1.2.3.4.5.6.7.8.10.20.30.100.200.300
@@ -125,9 +133,57 @@ Parameter5 will have Element4+Element5+Element6 as the index. Therefore {#ADVSNM
 {#ADVSNMPINDEX2}	=	101.202.303
 {#ADVSNMPINDEX2}	=	111.222.333
 
+The discovery rule key for this example looks like this:
+ advsnmp.discovery[{HOST.IP},"-v2c -cpublic",.1.2.3.4.5.6.7.8,2.1,4.3]
+
+
 If you would specify more Parameters,
 like Parameter6, Parameter7, Parameter8, .. those would map to
 {#ADVSNMPINDEX3}, {#ADVSNMPINDEX4}, {#ADVSNMPINDEX5}
+
+
+Another example: Dynamic Length Index
+If you have a dynamic list of OIDs with a dynamic length like this:
+.1.2.3.4.5.6.7.8.0.0.1.10.20.30.40.4.2.6.7
+.1.2.3.4.5.6.7.8.0.0.2.10.20.30.40.4.2.6.7
+.1.2.3.4.5.6.7.8.0.0.3.10.20.30.40.4.2.6.7
+.1.2.3.4.5.6.7.8.0.0.1.11.22.30.40.1.0.2
+.1.2.3.4.5.6.7.8.0.0.2.11.22.30.40.1.0.2
+.1.2.3.4.5.6.7.8.0.0.3.11.22.30.40.1.0.2
+.1.2.3.4.5.6.7.8.0.0.1.11.22.33.44.3.2.2.4.8.3.5
+.1.2.3.4.5.6.7.8.0.0.2.11.22.33.44.3.2.2.4.8.3.5
+.1.2.3.4.5.6.7.8.0.0.3.11.22.33.44.3.2.2.4.8.3.5
+
+Your base OID would be: .1.2.3.4.5.6.7.8.0.0
+
+The truncated OIDs available for indexing would be:
+		    .1.10.20.30.40.4.2.6.7
+                    .2.10.20.30.40.4.2.6.7
+                    .3.10.20.30.40.4.2.6.7
+                    .1.11.22.30.40.1.0.2
+                    .2.11.22.30.40.1.0.2
+                    .3.11.22.30.40.1.0.2
+                    .1.11.22.33.44.3.2.2.4.8.3.5
+                    .2.11.22.33.44.3.2.2.4.8.3.5
+                    .3.11.22.33.44.3.2.2.4.8.3.5
+
+If we specify the following key for our discovery.rule:
+advsnmp.discovery[{HOST.IP},"-v2c -cpublic",.1.2.3.4.5.6.7.8.0.0,1.50]
+
+This key specifies the Index offset as '1' and a length of '50'.
+Therefore the INDEX will start at the first relative OID Element (here: 1,2,3) and the INDEX
+will contain up to 50 OID Elements.
+
+We would receive the following Indexes:
+{#ADVSNMPINDEX1}	=	1.10.20.30.40.4.2.6.7
+{#ADVSNMPINDEX1}        =       2.10.20.30.40.4.2.6.7
+{#ADVSNMPINDEX1}        =       3.10.20.30.40.4.2.6.7
+{#ADVSNMPINDEX1}        =       1.11.22.30.40.1.0.2
+{#ADVSNMPINDEX1}        =       2.11.22.30.40.1.0.2
+{#ADVSNMPINDEX1}        =       3.11.22.30.40.1.0.2
+{#ADVSNMPINDEX1}        =       1.11.22.33.44.3.2.2.4.8.3.5
+{#ADVSNMPINDEX1}        =       2.11.22.33.44.3.2.2.4.8.3.5
+{#ADVSNMPINDEX1}        =       3.11.22.33.44.3.2.2.4.8.3.5
 
 
 TROUBLESHOOTING
