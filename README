@@ -80,7 +80,10 @@ Parameter3 will be used as the base OID, which will be provided to walk the OID 
 Now the interesting part: Parameter4 and all following Parameters.
 Parameter4 specifies the INDEX and its length in the format 'n.m'.
 Where 'n' is the relative offset for the INDEX value from the base OID, counted from left to right.
-'m' is the "OID length", that means how much OID parts to span.
+'m' is the "OID length", that means how much OID Elements to span.
+
+Note, by 'OID Elements' I mean each value, which is separated by a dot (.).
+OID '.1.2.3.4' has 4 Elements.
 
 Now by example:
 ---------------
@@ -104,20 +107,20 @@ Parameter4: 2.1 (Offset=2 Length=1)
 Parameter5: 4.3 (Offset=4 Length=3)
 
 advsnmp.discovery will split the OID to single parts:
-Part1   Part2   Part3   Part4   Part5   Part6
- 10	 20	 30	 100	 200	 300
- 10	 21	 30	 101	 202	 303
- 10	 22	 30	 111	 222	 333
+Element1   Element2   Element3   Element4   Element5   Element6
+   10	      20	 30	   100	 	200	 300
+   10	      21	 30	   101	 	202	 303
+   10	      22	 30	   111	 	222	 333
 
-Parameter4 specifies an offset of 2. This means Part2 (20,21,22) will be used as the index.
-Parameter4's length is set to 1, therefore that's it. Part2 will be {#ADVSNMPINDEX1}.
+Parameter4 specifies an offset of 2. This means Element2 (20,21,22) will be used as the index.
+Parameter4's length is set to 1, therefore that's it. Element2 will be {#ADVSNMPINDEX1}.
 {#ADVSNMPINDEX1}	=	20
 {#ADVSNMPINDEX1}	=	21
 {#ADVSNMPINDEX1}	=	22
 
-Parameter5 specifies an offset of 4 which means Part4 will be used as the index.
-Parameter5 also specifies a length of 3. That means the index will be expanded to Part5 and Part6.
-Parameter5 will have Part4+Part5+Part6 as the index. Therefore {#ADVSNMPINDEX2} would look like:
+Parameter5 specifies an offset of 4 which means Element4 will be used as the index.
+Parameter5 also specifies a length of 3. That means the index will be expanded to Element5 and Element6.
+Parameter5 will have Element4+Element5+Element6 as the index. Therefore {#ADVSNMPINDEX2} would look like:
 {#ADVSNMPINDEX2}	=	100.200.300
 {#ADVSNMPINDEX2}	=	101.202.303
 {#ADVSNMPINDEX2}	=	111.222.333
