@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 # script: advsnmp.discovery 
-# version: 1.1
+# version: 1.2
 # author: Simon Kowallik <sk simonkowallik.com>
 # description: Zabbix low level discovery script for advanced index discovery 
 # license: GPL2
@@ -104,6 +104,13 @@ foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $snmpw_o
     # split OID = VALUE
     my ($oid, $value) = split(/ = /, $snmpw_line);
 
+    # sanitize $value, remove start/end quotes
+    $value =~ s/^"//;
+    $value =~ s/"$//;
+    $value =~ s/"/\\"/g;
+    $value =~ s/\\/\\\\/g;
+
+
     # remove OPT_OID part from $oid
     # and we will get the trailing OID part, where we will extract the INDEX
     #
@@ -132,8 +139,8 @@ foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $snmpw_o
       }
       $line_index = $line_index . ";$index";      
     }
+    # assign value to INDEXES Hash. INDEX => VALUE
     $INDEXES{$line_index} = $value;
-    # put generated line index into @indexes
 }
 
 #
@@ -171,9 +178,14 @@ foreach my $line_index (sort keys %INDEXES) {
       print "\t\t\"{#ADVSNMPINDEX$ctr}\": \"$index\",\n";
       $ctr++
     }
-    # print value
-    print "\t\t\"{#ADVSNMPVALUE}\":\"$INDEXES{$line_index}\"\n";
-    print "\t\t}";
+    # print value if there are indexes (ctr would be 2 for one index)
+    if ($ctr > 1) {
+      print "\t\t\"{#ADVSNMPVALUE}\":\"$INDEXES{$line_index}\"\n";
+      print "\t\t}";
+    } else {
+      # if there is no index, close JSON
+      print "\t\t}";
+    }
 
 } #for
  
