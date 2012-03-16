@@ -16,23 +16,38 @@ advsnmp.discovery has some more advanced indexing features then the build-in var
 This discovery script is written in perl without any modules for maximum flexibility.
 However it requires the net-snmp tool 'snmpwalk'.
 
-advsnmp.discovery has been tested with Zabbix 1.9.10 (trunk),
+advsnmp.discovery 1.0 - 1.2 has been tested with Zabbix 1.9.10 (trunk),
 which is an alpha version of Zabbix 2.0.
+
+From Zabbix version 2.0.0rc1 onwards you should use advsnmp.discovery 1.3 or higher.
 
 
 ATTENTION
 =========
-At the time of writing this, there is an open bug ZBX-4725 which has some impact to
+For Zabbix versions below: 2.0.0rc1
+-----------------------------------
+The bug described in ZBX-4725 has some impact to
 the usage of this script but does not limit its main functionality.
-Right now, you HAVE TO use {HOST.IP} to specify the target to query!
+You HAVE TO use {HOST.IP} to specify the target to query!
 If this bug is solved, you can change the variable '$ZBX_4725_workaround' to 0 and
 use any macro to specify the target.
+
+Use: advsnmp.discovery version up to 1.2
+
+
+For Zabbix versions from and higher: 2.0.0rc1
+---------------------------------------------
+The bug descibed in ZBX-4725 is fixed in these versions.
+Just use advsnmp.discovery like documented below.
+
+Use: advsnmp.discovery version from 1.3 and higher
 
 
 COMPATIBILITY
 =============
-Zabbix 1.9.10 (trunk) Alpha Release
-Zabbix 2.0 (not released/untested)
+advsnmp.discovery 1.0 - 1.2: Zabbix 1.9.10 (trunk) Alpha Release
+advsnmp.discovery 1.3:       Zabbix 2.0.0rc1/rc2 (trunk versions)
+advsnmp.discovery 1.3:       Zabbix 2.0 (not released/untested)
 
 
 INSTALLATION
@@ -67,6 +82,7 @@ All following Parameters (optional):	INDEX Offset and INDEX Length
 Examples:
 advsnmp.discovery[{HOST.IP},"-v2c -cpublic",.1.2.3.4.5.6.7.8,1.1}
 advsnmp.discovery[{HOST.NAME},"-v2c -cmycommunity",.1.2.3.4.5.6.7.8,1.1,3.2,7.4}
+advsnmp.discovery[{HOST.NAME},"{$MY_MACRO_FOR_SNMPSETTINGS}",.1.2.3.4.5.6.7.8,1.1,3.2,7.4}
 
 
 HOW DOES IT WORK?

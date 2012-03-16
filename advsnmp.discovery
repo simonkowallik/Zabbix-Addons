@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 # script: advsnmp.discovery 
-# version: 1.2
+# version: 1.3
 # author: Simon Kowallik <sk simonkowallik.com>
 # description: Zabbix low level discovery script for advanced index discovery 
 # license: GPL2
@@ -52,10 +52,6 @@ use strict;
 #       1            2.4          5.3.4            
 #       2            2.2          5.3.4            
 #       3            2.9          5.3.4            
-
-
-# Workaround for Zabbix Bug ZBX-4725
-my $ZBX_4725_workaround = 1;
 
 
 # global options
@@ -144,17 +140,12 @@ foreach my $snmpw_line (`$SNMPWALK_BIN $GLOB_SNMPW $OPT_SNMPW $OPT_HOST $snmpw_o
 }
 
 #
-# print JSON
+# print JSON object
 # 
 
 print "{\n";
-# Workaround for ZBX-4725 see: https://support.zabbix.com/browse/ZBX-4725
-if($ZBX_4725_workaround) {
-  print "\t\"advsnmp.discovery[{HOST.IP},\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
-} else {
-# when fixed
-  print "\t\"advsnmp.discovery[$OPT_HOST,\\\"$OPT_SNMPW\\\",$OPT_OID$OPT_CONFIG_STRING]\":[\n";
-}
+# from Zabbix 2.0.0rc1 the array name has changed to 'data'
+print "\t\"data\":[\n";
 
 my $first_line = 1; 
 #for (my $i = 0; $i < $#INDEXES; $i++) {
