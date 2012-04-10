@@ -1,0 +1,50 @@
+#!/bin/bash
+# This script uses snmpget to check for an OID
+# If the OID is available (doesn't return No Such Object available..) the script
+# echos '1', and exits with '0'
+# If the OID isn't available or there is a timeout (host not available) the
+# script echos '0', and exits with '1'
+#
+# This script is intended for use with Zabbix 2.0
+
+#ARG 1: Host IP
+#ARG 2: SNMP Options
+#ARG 3: OID to check
+
+# there need to be exactly 3 arguments
+if [ $# -ne 3 ]; then
+ exit 0
+fi
+
+HOST=$1
+SNMPCMD="/usr/bin/snmpget -r2 $2 "
+OID=$3
+
+# exec snmpget to test OID availability
+RETURN=`$SNMPCMD $HOST $OID 2>&1`
+
+# if we have snmpget returned an error, echo 0 (for zabbix) - exit 1 (error)
+if [ $? -eq 1 ]; then
+ echo 0
+ exit 1
+else
+# else check the SNMP response
+ #replace spaces
+ RETURN=${RETURN// /}
+
+ #split at =
+ IFS="="
+ for VALUE in $RETURN
+ do
+  #if value = No such Object available.. echo 0 (for zabbix) - exit 1 (error)
+  if [ "$VALUE" == "NoSuchObjectavailableonthisagentatthisOID" ]; then
+   echo 0
+   exit 1
+  fi
+ done
+ unset IFS
+fi
+
+# no error found, echo 1 (for zabbix) - exit 0 (no error)
+echo 1
+exit 0
