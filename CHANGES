@@ -1,7 +1,0 @@
-v1.0: First Release
-v1.1: Support for dymanic length indexes
-v1.2: Start and ending quotes removed from ADVSNMPVALUE
-      advsnmp.discovery will return an empty JSON object when there is no INDEX
-      quotes and backslashes will be escaped
-v1.3: Changed the JSON object array name to 'data'. The array name changed with Zabbix v2.0.0rc1.
-      Removed the JSON array name workaround for ZBX-4725, it is no longer needed.
