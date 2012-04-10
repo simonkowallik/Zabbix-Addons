@@ -8,8 +8,8 @@ DESCRIPTION
 snmp.availability: Simple script to check for SNMP OID availability.
 
 advsnmp.discovery: Addon for Zabbix 2.0 Low-Level-Discovery.
-		   advsnmp.discovery is an alternative to the build-in
-		   SNMP low level discovery of Zabbix 2.0.
+		   advsnmp.discovery is an alternative to the build-in SNMP LLD
+		   (Low-Level-Discovery) of Zabbix 2.0.
 		   It integrates seamless into Zabbix by using "External check"
 		   discovery rules.
 
