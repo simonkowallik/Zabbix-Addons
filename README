@@ -18,3 +18,7 @@ advsnmp.discovery: Addon for Zabbix 2.0 Low-Level-Discovery.
 		   - Multiple Indexes {#ADVSNMPINDEX1} - {#ADVSNMPINDEXn}
 		   - Variable Index length
 		   - Dynamic Index length
+
+ssltls.check:      Script to check the availability of SSL or TLS services.
+		   Additionally it is possible to query different attributes of the
+		   x509 certificate of the queried SSL/TLS service. 

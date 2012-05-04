@@ -1,4 +1,12 @@
 #!/bin/bash
+#
+# script: snmp.availability
+# version: 1.0
+# author: Simon Kowallik <sk simonkowallik.com>
+# description: This script checks the availability/reachability of SNMP services. 
+# license: GPL2
+#
+# DETAIL:
 # This script uses snmpget to check for an OID
 # If the OID is available (doesn't return No Such Object available..) the script
 # echos '1', and exits with '0'
@@ -7,6 +15,9 @@
 #
 # This script is intended for use with Zabbix 2.0
 
+# USAGE:
+# snmp.availability[{$HOST.IP},"-v2c -cpublic", .1.1.1.1.1]
+#
 #ARG 1: Host IP
 #ARG 2: SNMP Options
 #ARG 3: OID to check
@@ -23,7 +34,7 @@ OID=$3
 # exec snmpget to test OID availability
 RETURN=`$SNMPCMD $HOST $OID 2>&1`
 
-# if we have snmpget returned an error, echo 0 (for zabbix) - exit 1 (error)
+# if we have snmpget returned an error, echo 0 (for zabbix) - exit 1 (error for console)
 if [ $? -eq 1 ]; then
  echo 0
  exit 1
@@ -36,7 +47,7 @@ else
  IFS="="
  for VALUE in $RETURN
  do
-  #if value = No such Object available.. echo 0 (for zabbix) - exit 1 (error)
+  #if value = No such Object available.. echo 0 (for zabbix) - exit 1 (error for console)
   if [ "$VALUE" == "NoSuchObjectavailableonthisagentatthisOID" ]; then
    echo 0
    exit 1
@@ -45,6 +56,6 @@ else
  unset IFS
 fi
 
-# no error found, echo 1 (for zabbix) - exit 0 (no error)
+# no error found, echo 1 (for zabbix) - exit 0 (no error for console)
 echo 1
 exit 0
