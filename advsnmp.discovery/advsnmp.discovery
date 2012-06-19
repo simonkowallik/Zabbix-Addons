@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 # script: advsnmp.discovery 
-# version: 1.3
+# version: 2.0
 # author: Simon Kowallik <sk simonkowallik.com>
 # description: Zabbix low level discovery script for advanced index discovery 
 # license: GPL2
@@ -165,7 +165,7 @@ foreach my $line_index (sort keys %INDEXES) {
     # print all INDEXES
     my $ctr = 1;
     foreach my $index ( split(/;/, $line_index) ) {
-      next if (!$index);
+      next if (!defined($index));
       print "\t\t\"{#ADVSNMPINDEX$ctr}\": \"$index\",\n";
       $ctr++
     }

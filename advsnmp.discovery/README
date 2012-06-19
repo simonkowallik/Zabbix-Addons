@@ -16,38 +16,11 @@ advsnmp.discovery has some more advanced indexing features then the build-in var
 This discovery script is written in perl without any modules for maximum flexibility.
 However it requires the net-snmp tool 'snmpwalk'.
 
-advsnmp.discovery 1.0 - 1.2 has been tested with Zabbix 1.9.10 (trunk),
-which is an alpha version of Zabbix 2.0.
-
-From Zabbix version 2.0.0rc1 onwards you should use advsnmp.discovery 1.3 or higher.
-
-
-ATTENTION
-=========
-For Zabbix versions below: 2.0.0rc1
------------------------------------
-The bug described in ZBX-4725 has some impact to
-the usage of this script but does not limit its main functionality.
-You HAVE TO use {HOST.IP} to specify the target to query!
-If this bug is solved, you can change the variable '$ZBX_4725_workaround' to 0 and
-use any macro to specify the target.
-
-Use: advsnmp.discovery version up to 1.2
-
-
-For Zabbix versions from and higher: 2.0.0rc1
----------------------------------------------
-The bug descibed in ZBX-4725 is fixed in these versions.
-Just use advsnmp.discovery like documented below.
-
-Use: advsnmp.discovery version from 1.3 and higher
-
-
 COMPATIBILITY
 =============
-advsnmp.discovery 1.0 - 1.2: Zabbix 1.9.10 (trunk) Alpha Release
 advsnmp.discovery 1.3:       Zabbix 2.0.0rc1/rc2 (trunk versions)
-advsnmp.discovery 1.3:       Zabbix 2.0 (not released/untested)
+advsnmp.discovery 1.3:       Zabbix 2.0.0 (public release)
+advsnmp.discovery 2.0:       Zabbix 2.0.0 (public release)
 
 
 INSTALLATION
@@ -58,9 +31,6 @@ Default is: ${datadir}/zabbix/externalscripts
 Check your zabbix_server.conf if in doubt.
 
 Then chmod a+x advsnmp.discovery
-
-Do not rename the script!
-Otherwise it will not work if you do so (without modifying the JSON response)!
 
 
 USAGE
