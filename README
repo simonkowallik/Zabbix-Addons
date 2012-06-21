@@ -1,11 +1,12 @@
 Author: Simon Kowallik <sk simonkowallik.com>
 License: GPL2
 
+This is a collection of scripts which extend the functionality of the
+Zabbix 2.0 Monitoring System.
+
 
 DESCRIPTION
 ===========
-
-snmp.availability: Simple script to check for SNMP OID availability.
 
 advsnmp.discovery: Addon for Zabbix 2.0 Low-Level-Discovery.
 		   advsnmp.discovery is an alternative to the build-in SNMP LLD
@@ -13,12 +14,23 @@ advsnmp.discovery: Addon for Zabbix 2.0 Low-Level-Discovery.
 		   It integrates seamless into Zabbix by using "External check"
 		   discovery rules.
 
-		   advsnmp.discovery has some more advanced indexing features then
-		   the build-in variant:
+		   advsnmp.discovery has some more advanced indexing features
+		   than the build-in variant:
 		   - Multiple Indexes {#ADVSNMPINDEX1} - {#ADVSNMPINDEXn}
 		   - Variable Index length
 		   - Dynamic Index length
 
-ssltls.check:      Script to check the availability of SSL or TLS services.
-		   Additionally it is possible to query different attributes of the
-		   x509 certificate of the queried SSL/TLS service. 
+snmp.availability: Simple script to check for SNMP OID availability.
+		  Works similar to icmpping (returning 0 for down and 1 for up).
+		  Intened to be used as an External Check Item.
+
+ssltls.check: Script to check the availability of SSL or TLS services.
+		   Additionally it is possible to query different attributes of
+		   the x509 certificate of the queried SSL/TLS service.
+		   Intened to be used as an External Check Item.
+		  
+tz.timeperiod: Script to check if the localtime for a given Timezone
+		   is within a the given Time Periods.
+		   It will return 0 if the localtime is outside of the
+		   Time Periods, and 1 if it is inside.
+		   Intened to be used as an External Check Item.

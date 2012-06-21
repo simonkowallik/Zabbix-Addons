@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+use DateTime;
+#
+# script: tz.timeperiod
+# version: 1.0
+# author: Simon Kowallik <sk simonkowallik.com>
+# description: This script will check if the localtime for a given
+#              TimeZone is within a given Time Period
+# license: GPL2
+#
+# DETAIL:
+# This script uses the DateTime Perl CPAN Module to determine if the 
+# current localtime for a given TimeZone is within the range of
+# specified Time Periods. tz.timeperiod will return 1 if the localtime 
+# is within the Time Period, else it will return 0.
+# You can use tz.timeperiod as an Item for your Zabbix Hosts.
+#
+# If something goes wrong, tz.timeperiod will exit without returning
+# anything.
+# The following exit codes are used:
+# 0 - all ok (0 or 1 should also be returned by timeframe)
+# 1 - parameter count is wrong
+# 2 - one of the day parameters is wrong
+# 3 - one of the timeframe parameters is wrong
+#
+# This script is intended for use with Zabbix 2.0
+
+# USAGE:
+# ARG1: timezone like Europe/Berlin or Singapore.
+#       Look at /usr/share/zoneinfo for a list
+# ARG*: timeframes in the Zabbix 2.0 format.
+#       See: zabbix.com/documentation/2.0/manual/appendix/time_period
+#
+# There is one exception for specifying Time Periods for tz.timeperiod:
+# You can specify multiple Periods for the same day.
+# For example:
+# The Time Period should be on every Day from Monday to Friday
+# from 9AM till 5PM and from 11PM on Monday to 5AM on Tuesday and
+# from 11AM to 4PM on Saturday in Los Angeles.
+# The Timezone would be: America/Los_Angeles
+# The Time Periods would be:
+#   1-5,09:00-17:00,1,23:00-24:00,2,00:00-05:00,6,11:00-16:00
+#   \_____________/ \____________|____________/ \___________/
+#          |                \         /               |
+#    Mo-Fr 9AM-5PM      Mon 11PM to Tue 5AM     Sat 11AM to 5PM
+# 
+#
+# zabbix key should look like
+# tz.timeperiod[timezone,1-4,05:00-14:00,5,05:00-17:00,5,19:00-21:00,6,14:00-18:00,7,21:00-24:00,1,00:00-03:00]
+# for the above example:
+# tz.timeperiod[America/Los_Angeles,1-5,09:00-17:00,1,23:00-24:00,2,00:00-05:00,6,11:00-16:00]
+#
+# when using via shell the arguments should look like
+# tz.timeperiod timezone 1-4 05:00-14:00 5 05:00-17:00 5 19:00-21:00 6 14:00-18:00 7 21:00-24:00 1 00:00-03:00
+# for the above example:
+# tz.timeperiod America/Los_Angeles 1-5 09:00-17:00 1 23:00-24:00 2 00:00-05:00 6 11:00-16:00
+#
+
+# check argument count
+if(scalar(@ARGV) < 3) {
+  exit 1;
+}
+
+# get timezone from argument 1
+my $timezone = $ARGV[0];
+
+# delete first element from ARRAY (timezone)
+shift(@ARGV);
+
+# create daytime object
+my $dt = DateTime->now;
+# set timezone
+$dt->set_time_zone($timezone);
+
+# get current localtime for timezone (based on unix epoch!)
+my $CURRENT_DAY = $dt->day_of_week;
+my $CURRENT_HMS = $dt->hms('');
+
+# set default result
+my $RESULT = 0;
+
+# add all arguments to the array @time_rules_raw
+@time_rules_raw = split(/;/, join(';', @ARGV));
+
+# check if we received day<=>timeframe elements
+if(int(scalar(@time_rules_raw)/2) != scalar(@time_rules_raw)/2) {
+  exit 1;
+}
+
+# we have day<=>timeframe couples, always jump two elements
+for(my $i=0; $i < scalar(@time_rules_raw); $i=$i+2) {
+  my $days = $time_rules_raw[$i];
+  my $d_start, $d_end;
+  my $timeframe = $time_rules_raw[$i+1];
+  my $tf_start, $tf_end;
+
+  # check if days parameter is valid
+  if($days =~ m/^[1-7]{1}-[1-7]{1}$/) {
+    ($d_start, $d_end) = split(/-/, $days);
+  } elsif($days =~ m/^[1-7]{1}$/) {
+    $d_start = $days;
+    $d_end = $days;
+  } else {
+    # if parameter not valid, exit
+    exit 2;
+  } #if days
+
+  # check if timeframe parameter is valid
+  if($timeframe =~ m/^\d{2}:\d{2}-\d{2}:\d{2}$/ || $timeframe =~ m/^\d{2}:\d{2}:\d{2}-\d{2}:\d{2}:\d{2}$/) {
+    # fill timeframe start and end
+    ($tf_start, $tf_end) = split(/-/, $timeframe); 
+    # remove :
+    $tf_start =~ s/://g;
+    $tf_end =~ s/://g;
+    # add 00 to the end, if timeframe was specified like 01:00-02:00
+    $tf_start .= '00' if (length($tf_start) < 6);
+    $tf_end .= '00' if (length($tf_end) < 6);
+  } else {
+    # the timeframe argument is not valid
+    exit 3;
+  } #if timeframe 
+ 
+  # check if current day & time is within the specified timeframes 
+  if($CURRENT_DAY >= $d_start && $CURRENT_DAY <= $d_end) {
+
+    if ($CURRENT_HMS > $tf_start && $CURRENT_HMS < $tf_end) {
+      # we found a match, we dont need to continue with the for loop
+      $RESULT = 1;
+      last;
+    } #if inner
+  } #if outer
+} #for
+
+# if we have a result return 0 or 1 and exit
+if ($RESULT) {
+  print "1\n";
+  exit 0
+} else {
+  print "0\n";
+  exit 0
+}
+
