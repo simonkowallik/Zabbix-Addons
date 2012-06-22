@@ -2,7 +2,7 @@
 use DateTime;
 #
 # script: tz.timeperiod
-# version: 1.0
+# version: 1.1
 # author: Simon Kowallik <sk simonkowallik.com>
 # description: This script will check if the localtime for a given
 #              TimeZone is within a given Time Period
@@ -57,7 +57,7 @@ use DateTime;
 #
 
 # check argument count
-if(scalar(@ARGV) < 3) {
+if(scalar(@ARGV) < 2) {
   exit 1;
 }
 
@@ -80,7 +80,7 @@ my $CURRENT_HMS = $dt->hms('');
 my $RESULT = 0;
 
 # add all arguments to the array @time_rules_raw
-@time_rules_raw = split(/;/, join(';', @ARGV));
+@time_rules_raw = split(/[;.]{1}/, join(';', @ARGV));
 
 # check if we received day<=>timeframe elements
 if(int(scalar(@time_rules_raw)/2) != scalar(@time_rules_raw)/2) {
