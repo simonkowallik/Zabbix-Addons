@@ -80,7 +80,7 @@ my $CURRENT_HMS = $dt->hms('');
 my $RESULT = 0;
 
 # add all arguments to the array @time_rules_raw
-@time_rules_raw = split(/[;.]{1}/, join(';', @ARGV));
+@time_rules_raw = split(/[;,]{1}/, join(';', @ARGV));
 
 # check if we received day<=>timeframe elements
 if(int(scalar(@time_rules_raw)/2) != scalar(@time_rules_raw)/2) {
