@@ -150,6 +150,7 @@ print "\t\"data\":[\n";
 my $first_line = 1; 
 #for (my $i = 0; $i < $#INDEXES; $i++) {
 foreach my $line_index (sort keys %INDEXES) {
+    $line_index=~ s/^;//;
 
     # print if it is not the first line
     if($first_line) {
