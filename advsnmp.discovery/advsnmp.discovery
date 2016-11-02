@@ -165,7 +165,7 @@ foreach my $line_index (sort keys %INDEXES) {
     # print all INDEXES
     my $ctr = 1;
     foreach my $index ( split(/;/, $line_index) ) {
-      next if (!defined($index));
+      next if ($index eq '');
       print "\t\t\"{#ADVSNMPINDEX$ctr}\": \"$index\",\n";
       $ctr++
     }
